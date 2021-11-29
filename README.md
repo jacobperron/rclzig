@@ -29,42 +29,31 @@ The same applies for rclzig.
 ### Build
 
 1. Clone this repository
-```
-git clone https://github.com/jacobperron/rclzig.git
-```
+
+        git clone https://github.com/jacobperron/rclzig.git
 
 1. Source your ROS 2 installation, e.g. ROS Galactic:
 
-```
-source /opt/ros/galactic/setup.bash
-```
+        source /opt/ros/galactic/setup.bash
 
 1. Build:
 
-```
-cd rclzig
-zig build
-```
+        cd rclzig
+        zig build
 
 1. Optionally, run tests:
 
-```
-zig build test
-```
+        zig build test
 
 ### Try the examples
 
 Run the talker:
 
-```
-zig build talker
-```
+    zig build talker
 
 In a second shell, run the listener:
 
-```
-zig build listener
-```
+    zig build listener
 
 ### Build your own package
 
