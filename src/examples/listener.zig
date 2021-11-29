@@ -15,6 +15,7 @@
 const std = @import("std");
 
 const rcl = @import("rclzig");
+const std_msgs = @import("std_msgs");
 
 pub fn main() anyerror!void {
     std.log.info("Start rclzig listener", .{});
@@ -40,14 +41,28 @@ pub fn main() anyerror!void {
     // Initialize Node
     var node_options = rcl.NodeOptions.init(rcl_allocator);
     defer node_options.deinit();
-    var node = try rcl.Node.init("talker", "", &context, node_options);
+    var node = try rcl.Node.init("listener", "", &context, node_options);
     defer node.deinit();
 
     // Create subscription
-    // TODO
+    var subscription_options = rcl.SubscriptionOptions.init(rcl_allocator);
+    var subscription = try rcl.Subscription(std_msgs.msg.String).init(node, "chatter", subscription_options);
+    defer subscription.deinit(&node);
 
     // Spin on node
     // TODO
+    // Temporarily poll for messages
+    const poll_period: u64 = 1e9;
+    var msg_info = rcl.subscription.MessageInfo.init();
+    while (true) {
+        var msg_opt: ?std_msgs.msg.String = try subscription.take(&msg_info);
+        if (msg_opt) |*msg| {
+            defer msg.deinit();
+            const data = msg.getData();
+            std.log.info("I heard: {s} \n", .{data});
+        }
+        std.time.sleep(poll_period);
+    }
 
     // Shutdown Context
     try context.shutdown();
