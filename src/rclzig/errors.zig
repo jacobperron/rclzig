@@ -127,8 +127,8 @@ pub fn fromRclError(rcl_ret: i32) RclzigError {
         rcl.RCL_RET_INVALID_LOG_LEVEL_RULE => RclzigError.LogLevelRuleInvalid,
         rcl.RCL_RET_EVENT_INVALID => RclzigError.EventInvalid,
         rcl.RCL_RET_EVENT_TAKE_FAILED => RclzigError.EventTakeFailed,
-        rcl.RCL_RET_LIFECYCLE_STATE_REGISTERED => RclzigError.LifecycleStateRegistered,
-        rcl.RCL_RET_LIFECYCLE_STATE_NOT_REGISTERED => RclzigError.LifecycleStateNotRegistered,
+        // rcl.RCL_RET_LIFECYCLE_STATE_REGISTERED => RclzigError.LifecycleStateRegistered,
+        // rcl.RCL_RET_LIFECYCLE_STATE_NOT_REGISTERED => RclzigError.LifecycleStateNotRegistered,
         rcl.RCL_RET_ERROR => RclzigError.Unspecified,
         else => RclzigError.Unspecified,
     };
