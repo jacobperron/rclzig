@@ -31,4 +31,5 @@ test {
     _ = context;
     _ = errors;
     _ = node;
+    _ = publisher;
 }

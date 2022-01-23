@@ -45,6 +45,19 @@ pub fn build(b: *std.build.Builder) void {
         "rcl",
         "rcutils",
     };
+    const std_msgs_dependencies = [_][]const u8{
+        "std_msgs__rosidl_typesupport_c",
+    };
+
+    const std_msgs_lib = b.addStaticLibrary("std_msgs", "src/std_msgs/std_msgs.zig");
+    std_msgs_lib.setBuildMode(mode);
+    std_msgs_lib.setTarget(target);
+    amentTargetCDependencies(allocator, std_msgs_lib, &std_msgs_dependencies);
+    std_msgs_lib.install();
+
+    const std_msgs_tests = b.addTest("src/std_msgs/std_msgs.zig");
+    std_msgs_tests.setBuildMode(mode);
+    amentTargetCDependencies(allocator, std_msgs_tests, &std_msgs_dependencies);
 
     const rclzig_lib = b.addStaticLibrary("rclzig", "src/rclzig/rclzig.zig");
     rclzig_lib.setBuildMode(mode);
@@ -55,40 +68,11 @@ pub fn build(b: *std.build.Builder) void {
     const rclzig_tests = b.addTest("src/rclzig/rclzig.zig");
     rclzig_tests.setBuildMode(mode);
     amentTargetCDependencies(allocator, rclzig_tests, &rcl_dependencies);
-
-    const cflags = [_][]const u8{};
-    const std_msgs_dependencies = [_][]const u8{
-        "std_msgs__rosidl_typesupport_c",
-        "rosidl_runtime_c",
-        // "rosidl_generator_c",
-        "rosidl_typesupport_c",
-        // "rosidl_typesupport_interface",
-    };
-    const std_msgs_c_lib = b.addSharedLibrary("std_msgs_c", null, .unversioned);
-    std_msgs_c_lib.addCSourceFile("src/std_msgs/std_msgs_c/string.c", &cflags);
-    amentTargetCDependencies(allocator, std_msgs_c_lib, &std_msgs_dependencies);
-    std_msgs_c_lib.install();
-
-    const std_msgs_lib = b.addStaticLibrary("std_msgs", "src/std_msgs/std_msgs.zig");
-    std_msgs_lib.setBuildMode(mode);
-    std_msgs_lib.setTarget(target);
-    // amentTargetCDependencies(allocator, std_msgs_lib, &std_msgs_dependencies);
-    std_msgs_lib.linkLibC();
-    std_msgs_lib.addIncludeDir("src/std_msgs/std_msgs_c/include");
-    std_msgs_lib.linkLibrary(std_msgs_c_lib);
-    std_msgs_lib.install();
-
-    const std_msgs_tests = b.addTest("src/std_msgs/test.zig");
-    std_msgs_tests.setBuildMode(mode);
-    std_msgs_lib.linkLibC();
-    std_msgs_lib.addIncludeDir("src/std_msgs/std_msgs_c/include");
-    std_msgs_lib.linkLibrary(std_msgs_c_lib);
-    // amentTargetCDependencies(allocator, std_msgs_tests, &std_msgs_dependencies);
-    std_msgs_tests.addPackage(.{
-        .name = "rclzig",
-        .path = .{ .path = "./src/rclzig/rclzig.zig" },
+    amentTargetCDependencies(allocator, rclzig_tests, &std_msgs_dependencies);
+    rclzig_tests.addPackage(.{
+        .name = "std_msgs",
+        .path = .{ .path = "./src/std_msgs/std_msgs.zig" },
     });
-    amentTargetCDependencies(allocator, std_msgs_tests, &rcl_dependencies);
 
     const talker_exe = b.addExecutable("talker", "src/examples/talker.zig");
     talker_exe.setTarget(target);
