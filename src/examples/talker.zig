@@ -15,9 +15,10 @@
 const std = @import("std");
 
 const rcl = @import("rclzig");
+const std_msgs = @import("std_msgs");
 
 pub fn main() anyerror!void {
-    std.log.info("Start rclzig talker", .{});
+    std.log.info("Start rclzig talker\n", .{});
 
     // Initialize zig allocator
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -44,10 +45,28 @@ pub fn main() anyerror!void {
     defer node.deinit();
 
     // Create publisher
-    // TODO
+    var publisher_options = rcl.PublisherOptions.init(rcl_allocator);
+    var publisher = try rcl.Publisher(std_msgs.msg.String).init(node, "chatter", publisher_options);
+    defer publisher.deinit(&node);
+
+    // Create a message to publish
+    var message = try std_msgs.msg.String.init(allocator);
+    defer message.deinit();
+    try message.setData("Hello world");
 
     // Start publishing
-    // TODO
+    var timer = try std.time.Timer.start();
+    const publish_period: u64 = 1e9;
+    while (true) {
+        const time_since_publish: u64 = timer.read();
+        if (time_since_publish >= publish_period) {
+            std.log.info("Publishing message\n", .{});
+            publisher.publish(message);
+            timer.reset();
+            continue;
+        }
+        std.time.sleep(publish_period - time_since_publish);
+    }
 
     // Shutdown Context
     try context.shutdown();

@@ -21,10 +21,12 @@ const fromRclError = @import("errors.zig").fromRclError;
 
 pub const PublisherOptions = struct {
     rcl_options: rcl.rcl_publisher_options_t,
+    rcl_allocator: *RclAllocator,
 
     pub fn init(allocator: *RclAllocator) PublisherOptions {
         var publisher_options = PublisherOptions{
             .rcl_options = rcl.rcl_publisher_get_default_options(),
+            .rcl_allocator = allocator,
         };
         publisher_options.rcl_options.allocator = allocator.c_allocator;
 
@@ -42,7 +44,7 @@ pub fn Publisher(comptime MsgType: type) type {
         pub fn init(node: Node, topic_name: []const u8, options: PublisherOptions) !Self {
             var publisher = Self{
                 .rcl_publisher = rcl.rcl_get_zero_initialized_publisher(),
-                .type_support = MsgType.init(),
+                .type_support = try MsgType.init(options.rcl_allocator.zig_allocator),
             };
             const init_ret = rcl.rcl_publisher_init(&publisher.rcl_publisher, &node.rcl_node, @ptrToInt(publisher.type_support.rcl_type_support), @ptrToInt(topic_name.ptr), &options.rcl_options);
             if (init_ret != rcl.RCL_RET_OK) {
@@ -52,9 +54,17 @@ pub fn Publisher(comptime MsgType: type) type {
         }
 
         pub fn deinit(self: *Self, node: *Node) void {
+            self.type_support.deinit();
             const fini_ret = rcl.rcl_publisher_fini(&self.rcl_publisher, &node.rcl_node);
             if (fini_ret != rcl.RCL_RET_OK) {
                 std.log.err("failed to finalize rcl_publisher_t ({})\n", .{fini_ret});
+            }
+        }
+
+        pub fn publish(self: *Self, message: MsgType) void {
+            const ret = rcl.rcl_publish(&self.rcl_publisher, message.rcl_message, 0);
+            if (ret != rcl.RCL_RET_OK) {
+                std.log.err("failed to publish message ({})\n", .{ret});
             }
         }
     };

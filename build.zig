@@ -47,6 +47,7 @@ pub fn build(b: *std.build.Builder) void {
     };
     const std_msgs_dependencies = [_][]const u8{
         "std_msgs__rosidl_typesupport_c",
+        "std_msgs__rosidl_generator_c",
     };
 
     const std_msgs_lib = b.addStaticLibrary("std_msgs", "src/std_msgs/std_msgs.zig");
@@ -81,7 +82,13 @@ pub fn build(b: *std.build.Builder) void {
         .name = "rclzig",
         .path = .{ .path = "./src/rclzig/rclzig.zig" },
     });
+    talker_exe.addPackage(.{
+        .name = "std_msgs",
+        .path = .{ .path = "./src/std_msgs/std_msgs.zig" },
+    });
+
     amentTargetCDependencies(allocator, talker_exe, &rcl_dependencies);
+    amentTargetCDependencies(allocator, talker_exe, &std_msgs_dependencies);
     talker_exe.install();
     const talker_cmd = talker_exe.run();
     talker_cmd.step.dependOn(b.getInstallStep());
