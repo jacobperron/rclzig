@@ -19,12 +19,15 @@ pub const NodeOptions = node.NodeOptions;
 pub const Publisher = publisher.Publisher;
 pub const PublisherOptions = publisher.PublisherOptions;
 pub const RclAllocator = allocator.RclAllocator;
+pub const Subscription = subscription.Subscription;
+pub const SubscriptionOptions = subscription.SubscriptionOptions;
 
 pub const allocator = @import("allocator.zig");
 pub const context = @import("context.zig");
 pub const errors = @import("errors.zig");
 pub const node = @import("node.zig");
 pub const publisher = @import("publisher.zig");
+pub const subscription = @import("subscription.zig");
 
 test {
     _ = allocator;
@@ -32,4 +35,5 @@ test {
     _ = errors;
     _ = node;
     _ = publisher;
+    _ = subscription;
 }
