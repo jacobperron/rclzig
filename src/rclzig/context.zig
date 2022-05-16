@@ -58,7 +58,11 @@ pub const Context = struct {
     }
 
     pub fn deinit(self: *Context) void {
-        // TODO(jacobperron): Check if shutdown and do shutdown if not
+        if (self.ok()) {
+            self.shutdown() catch |err| {
+                std.log.err("failed to shutdown context in deinit: {}\n", .{err});
+            };
+        }
         const fini_ret = rcl.rcl_context_fini(&self.rcl_context);
         if (fini_ret != rcl.RCL_RET_OK) {
             // Should not happen unless there's a bug in rcl
@@ -72,19 +76,37 @@ pub const Context = struct {
             return fromRclError(rcl_ret);
         }
     }
+
+    pub fn ok(self: *Context) bool {
+        return rcl.rcl_context_is_valid(&self.rcl_context);
+    }
 };
 
 test "check for memory leaks" {
     var rcl_allocator = try RclAllocator.init(std.testing.allocator);
     defer rcl_allocator.deinit();
 
-    // Initialize Context
+    const argv = [_][]const u8{};
+    var context_options = try ContextOptions.init(rcl_allocator);
+    defer context_options.deinit();
+    var context = try Context.init(&argv, context_options);
+
+    // implicit shutdown expected
+    context.deinit();
+    try std.testing.expect(!context.ok());
+}
+
+test "init shutdown cycle" {
+    var rcl_allocator = try RclAllocator.init(std.testing.allocator);
+    defer rcl_allocator.deinit();
+
     const argv = [_][]const u8{};
     var context_options = try ContextOptions.init(rcl_allocator);
     defer context_options.deinit();
     var context = try Context.init(&argv, context_options);
     defer context.deinit();
 
-    // Shutdown Context
+    try std.testing.expect(context.ok());
     try context.shutdown();
+    try std.testing.expect(!context.ok());
 }
