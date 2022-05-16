@@ -82,9 +82,8 @@ pub fn Subscription(comptime MsgType: type) type {
                 return null;
             }
             if (ret != rcl.RCL_RET_OK) {
-                // TODO: return error
                 message.deinit();
-                std.log.err("failed to take message ({})\n", .{ret});
+                return fromRclError(ret);
             }
 
             return message;
