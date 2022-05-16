@@ -50,7 +50,7 @@ pub fn main() anyerror!void {
     defer publisher.deinit(&node);
 
     // Create a message to publish
-    var message = try std_msgs.msg.String.init(allocator);
+    var message = try std_msgs.msg.String.init(rcl_allocator.zig_allocator);
     defer message.deinit();
     try message.setData("Hello world");
 

@@ -23,7 +23,7 @@ pub const MessageInfo = struct {
     rmw_message_info: rcl.rmw_message_info_t,
 
     pub fn init() MessageInfo {
-        return SubscriptionOptions{
+        return MessageInfo{
             .rmw_message_info = rcl.rmw_get_zero_initialized_message_info(),
         };
     }
@@ -73,16 +73,20 @@ pub fn Subscription(comptime MsgType: type) type {
             }
         }
 
-        pub fn take(self: *Self, message_info: *MessageInfo) ?MsgType {
-            var message: MsgType = MsgType.init(self.options.rcl_allocator.zig_allocator);
-            const ret = rcl.rcl_take(&self.rcl_subscription, message.rcl_message, message_info.rcl_message_info, 0);
+        pub fn take(self: *Self, message_info: *MessageInfo) !?MsgType {
+            var message: MsgType = try MsgType.init(self.options.rcl_allocator.zig_allocator);
+            const ret = rcl.rcl_take(&self.rcl_subscription, message.rcl_message, &message_info.rmw_message_info, 0);
+
             if (ret == rcl.RCL_RET_SUBSCRIPTION_TAKE_FAILED) {
+                message.deinit();
                 return null;
             }
             if (ret != rcl.RCL_RET_OK) {
                 // TODO: return error
+                message.deinit();
                 std.log.err("failed to take message ({})\n", .{ret});
             }
+
             return message;
         }
     };
@@ -117,6 +121,11 @@ test "check for memory leaks" {
     var subscription_options = SubscriptionOptions.init(rcl_allocator);
     var subscription = try Subscription(std_msgs.msg.String).init(node, "chatter", subscription_options);
     defer subscription.deinit(&node);
+
+    // Take
+    var msg_info = MessageInfo.init();
+    var msg_opt: ?std_msgs.msg.String = try subscription.take(&msg_info);
+    try std.testing.expectEqual(msg_opt, null);
 
     // Shutdown Context
     try context.shutdown();
